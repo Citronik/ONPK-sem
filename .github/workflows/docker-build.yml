@@ -2,9 +2,9 @@ name: Build and Push Docker Image CI
 
 on:
   push:
-    branches: [ "main", "Citronik-ci" ]
+    branches: [ "main", "1.0.0/git/ci" ]
   pull_request:
-    branches: [ "main", "Citronik-ci" ]
+    branches: [ "main", "1.0.0/git/ci" ]
     
 env:
   tag: "${{ github.ref == 'refs/heads/main' && 'latest' || 'stage' }}"
