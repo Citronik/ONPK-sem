@@ -25,8 +25,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: zauni-zadanie-appfrontend/Dockerfile
+          context: zauni-zadanie-appfrontend
+          file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/onpk-appfrontend:${{ env.tag }}
 
@@ -45,7 +45,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: zauni-zadanie-appbackend/Dockerfile
+          context: zauni-zadanie-appbackend
+          file: ./Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/onpk-appbackend:${{ env.tag }}
