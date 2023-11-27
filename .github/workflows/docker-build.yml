@@ -20,15 +20,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Set build directory
-        run: |
-          cd zauni-zadanie-appfrontend
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: zauni-zadanie-appfrontend
           file: zauni-zadanie-appfrontend/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/onpk-appfrontend:${{ env.tag }}
@@ -43,15 +40,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Set build directory
-        run: |
-          cd zauni-zadanie-appbackend
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: zauni-zadanie-appbackend
           file: zauni-zadanie-appbackend/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/onpk-appbackend:${{ env.tag }}
