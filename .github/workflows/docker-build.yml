@@ -24,9 +24,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - 
-        name: Set environment variables
-        if: github.repository == 'octo-org/octo-repo-prod' 
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
