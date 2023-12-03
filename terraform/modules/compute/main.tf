@@ -1,4 +1,4 @@
-resource "openstack_compute_instance_v2" "private_instance" {
+resource "openstack_compute_instance_v2" "instance" {
   #depends_on      = [openstack_networking_secgroup_v2.sec_group_onpk_private, openstack_compute_instance_v2.jump_instance]
   name            = var.instance_name
   image_id        = data.openstack_images_image_v2.image.id

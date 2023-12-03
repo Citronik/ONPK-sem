@@ -44,20 +44,20 @@ variable "k8s_version" {
 
 variable "public_rules" {
   description = "List of security group rules"
-  type        = list(object({
+  type = list(object({
     protocol    = string
     from_port   = number
     to_port     = number
-    cidr_block = string
+    cidr_blocks = string
   }))
 }
 
 variable "private_rules" {
   description = "List of security group rules"
-  type        = list(object({
+  type = list(object({
     protocol    = string
     from_port   = number
     to_port     = number
-    cidr_block = string
+    cidr_blocks = string
   }))
 }
