@@ -59,26 +59,26 @@ module "security_group_private" {
 
 # --------------------- instances ----------------------
 module "instance_jump" {
-  depends_on      = [data.cloudinit_config.user_data_jump, module.security_group_public, module.network]
-  source          = "../../modules/compute"
-  instance_name   = "${var.project}-${var.environment}-jump"
-  instance-kp     = openstack_compute_keypair_v2.public_kp.name
-  user_data       = data.cloudinit_config.user_data_jump.rendered
-  image           = local.kis.instance.image.ubuntu.name
-#  image           = local.kis.instance.image.debian.name
+  depends_on    = [data.cloudinit_config.user_data_jump, module.security_group_public, module.network]
+  source        = "../../modules/compute"
+  instance_name = "${var.project}-${var.environment}-jump"
+  instance-kp   = openstack_compute_keypair_v2.public_kp.name
+  user_data     = data.cloudinit_config.user_data_jump.rendered
+  image         = local.kis.instance.image.ubuntu.name
+  #  image           = local.kis.instance.image.debian.name
   flavor          = local.kis.instance.flavor_name
   network_name    = module.network.network_name
   security_groups = [module.security_group_public.security_group_name]
 }
 
 module "instance_private" {
-  depends_on      = [data.cloudinit_config.user_data_private, module.security_group_private, module.network]
-  source          = "../../modules/compute"
-  instance_name   = "${var.project}-${var.environment}-private"
-  instance-kp     = openstack_compute_keypair_v2.private_kp.name
-  user_data       = data.cloudinit_config.user_data_private.rendered
-  image           = local.kis.instance.image.ubuntu.name
-#  image           = local.kis.instance.image.debian.name
+  depends_on    = [data.cloudinit_config.user_data_private, module.security_group_private, module.network]
+  source        = "../../modules/compute"
+  instance_name = "${var.project}-${var.environment}-private"
+  instance-kp   = openstack_compute_keypair_v2.private_kp.name
+  user_data     = data.cloudinit_config.user_data_private.rendered
+  image         = local.kis.instance.image.ubuntu.name
+  #  image           = local.kis.instance.image.debian.name
   flavor          = local.kis.instance.flavor_name
   network_name    = module.network.network_name
   security_groups = [module.security_group_private.security_group_name]

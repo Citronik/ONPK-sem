@@ -26,5 +26,5 @@ resource "openstack_networking_secgroup_rule_v2" "rule" {
   ethertype         = "IPv4"
   remote_ip_prefix  = var.rules[count.index].cidr_blocks
   security_group_id = openstack_networking_secgroup_v2.sec_group.id
-  
+
 }
