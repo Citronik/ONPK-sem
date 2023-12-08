@@ -12,3 +12,14 @@ resource "openstack_compute_instance_v2" "instance" {
     name = data.openstack_networking_network_v2.network.name
   }
 }
+
+resource "openstack_networking_floatingip_v2" "fip_1" {
+  count = var.floating_ip_network != "" ? 1 : 0
+  pool = var.floating_ip_network
+}
+
+resource "openstack_compute_floatingip_associate_v2" "fip_1" {
+  count = var.floating_ip_network != "" ? 1 : 0
+  floating_ip = openstack_networking_floatingip_v2.fip_1.*.address[count.index]
+  instance_id = openstack_compute_instance_v2.instance.id
+}

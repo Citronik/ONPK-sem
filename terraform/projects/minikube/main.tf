@@ -69,6 +69,7 @@ module "instance_jump" {
   flavor          = local.kis.instance.flavor_name
   network_name    = module.network.network_name
   security_groups = [module.security_group_public.security_group_name]
+  floating_ip_network = var.public_network_name
 }
 
 module "instance_private" {
@@ -82,15 +83,7 @@ module "instance_private" {
   flavor          = local.kis.instance.flavor_name
   network_name    = module.network.network_name
   security_groups = [module.security_group_private.security_group_name]
-}
-
-resource "openstack_networking_floatingip_v2" "fip_1" {
-  pool = var.public_network_name
-}
-
-resource "openstack_compute_floatingip_associate_v2" "fip_1" {
-  floating_ip = openstack_networking_floatingip_v2.fip_1.address
-  instance_id = module.instance_jump.instance_id
+  floating_ip_network = ""
 }
 
 resource "null_resource" "wait_for_minikube" {
@@ -98,23 +91,25 @@ resource "null_resource" "wait_for_minikube" {
     public_instance_ip  = module.instance_jump.instance_ip
     private_instance_ip = module.instance_private.instance_ip
   }
-
   provisioner "local-exec" {
     command = <<EOF
-      set SSH_KEY_JUMP="${path.module}/${openstack_compute_keypair_v2.public_kp.name}.pem"
-      set SSH_KEY_PRIVATE="${path.module}/${openstack_compute_keypair_v2.private_kp.name}.pem"
-
-      set PUBLIC_INSTANCE_IP="${module.instance_jump.instance_ip}"
-      set PRIVATE_INSTANCE_IP="${module.instance_private.instance_ip}"
-
-      set USERNAME="${local.kis.instance.image.ubuntu.username}"
-
-      ssh -i "%SSH_KEY_JUMP%" -N -L 8080:%PRIVATE_INSTANCE_IP%:22 -p 22 %USERNAME%@%PUBLIC_INSTANCE_IP%
-
-      until ssh -i "%SSH_KEY_PRIVATE%" -p 8080 localhost "minikube profile list > /dev/null"; do
-        echo "Waiting for minikube installation to complete..."
-        sleep 5
-      done
+      set SSH_KEY_JUMP="${path.module}\ONPK-dev-private_kp.pem"
+      set SSH_KEY_PRIVATE="${path.module}\ONPK-dev-public_kp.pem"
+  
+      $PUBLIC_INSTANCE_IP="${module.instance_jump.instance_ip}"
+      $PRIVATE_INSTANCE_IP="${module.instance_private.instance_ip}"
+  
+      $USERNAME="${local.kis.instance.image.ubuntu.username}"
+  
+      # Start SSH tunnel to the jump server
+      Start-Process ssh -ArgumentList "-i $SSH_KEY_JUMP -N -L 8080:$PRIVATE_INSTANCE_IP:22 -p 22 $USERNAME@$PUBLIC_INSTANCE_IP" -NoNewWindow -PassThru
+  
+      # Wait for minikube installation to complete
+      do {
+        Write-Host "Waiting for minikube installation to complete..."
+        Start-Sleep -Seconds 5
+      } until (ssh -i $SSH_KEY_PRIVATE -p 8080 localhost "minikube profile list > $null")
     EOF
   }
 }
+
