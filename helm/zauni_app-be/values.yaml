@@ -1,0 +1,27 @@
+# Default values for zauni_app-be.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  pullPolicy: IfNotPresent
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  port: 9080
+  type: ClusterIP
+  targetPort: 9080
+
+mongodb:
+  name: zauni-app-mongodb
+  databaseName: zauni_app
+  replicaCount: 1
+  version: 10.2.0
+  port: 27017
+  username: admin
+  password: admin

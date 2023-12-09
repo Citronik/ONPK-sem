@@ -1,0 +1,12 @@
+apiVersion: bitnami.com/v1alpha1
+kind: HelmRelease
+metadata:
+  name: {{ .Values.mongodb.name }}
+spec:
+  chart: bitnami/mongodb
+  version: {{ .Values.mongodb.version }}
+  values:
+    replicas: {{ .Values.mongodb.replicaCount }}
+  mongodb.database: {{ .Values.mongodb.databaseName }}
+  mongodb.username: {{ .Values.mongodb.username }}
+  mongodb.password: {{ .Values.mongodb.password }}

@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "zauni-app-fe.fullname" . }}
+  labels:
+    {{- include "zauni-app-fe.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "zauni-app-fe.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "zauni-app-fe.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: hijackersvk/onpk-appfrontend:{{ .Values.image.tag | default .Chart.AppVersion }}
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+        env:
+          - name: REACT_APP_APIHOSTPORT
+            value: {{ .Values.env.REACT_APP_APIHOSTPORT }}
+        ports:
+        - containerPort: 8080
