@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: nginx
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
   tag: "stage"
 
@@ -19,4 +19,4 @@ service:
   type: ClusterIP
 
 env:
-  REACT_APP_APIHOSTPORT: "http://zauni-app-be:9080"
+  REACT_APP_APIHOSTPORT: "zauni-app-be:9080"
