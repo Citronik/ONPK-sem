@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "zauni-app-be.fullname" . }}
+  labels:
+    {{- include "zauni-app-be.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "zauni-app-be.selectorLabels" . | nindent 4 }}
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: TCP

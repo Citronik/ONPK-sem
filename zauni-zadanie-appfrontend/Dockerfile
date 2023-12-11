@@ -20,7 +20,9 @@ COPY conf.d/default.conf /etc/nginx/conf.d
 
 EXPOSE 8080
 
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+
+
+ENTRYPOINT ["/docker-entrypoint.d/env.sh", "nginx", "-g", "daemon off;"]
 
 ## TODO: Vasou ulohou je:
 # 1. pridat instrukciu, ktora bude informovat o tom, ze kontajner publikuje TCP port 8080
