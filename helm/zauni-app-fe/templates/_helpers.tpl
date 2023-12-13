@@ -55,5 +55,5 @@ Backend API connection REACT_APP_APIHOSTPORT
 */}}
 {{- define "zauni-app-fe.env" -}}
 - name: REACT_APP_APIHOSTPORT
-  value: {{ .Values.backend.name }}:{{ .Values.backend.port }}
+  value: {{ .Values.backend.name }}/api
 {{- end }}
