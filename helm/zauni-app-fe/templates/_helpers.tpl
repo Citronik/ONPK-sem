@@ -49,3 +49,11 @@ Selector labels
 app.kubernetes.io/name: {{ include "zauni-app-fe.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+Backend API connection REACT_APP_APIHOSTPORT
+*/}}
+{{- define "zauni-app-fe.env" -}}
+- name: REACT_APP_APIHOSTPORT
+  value: {{ .Values.backend.name }}:{{ .Values.backend.port }}
+{{- end }}

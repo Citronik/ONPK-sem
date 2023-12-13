@@ -14,9 +14,14 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-service:
-  port: 80
-  type: ClusterIP
+ingress:
+  node-port: 31400
 
-env:
-  REACT_APP_APIHOSTPORT: "zauni-app-be:9080"
+service:
+  port: 8080
+  type: ClusterIP
+  targetPort: 8080
+
+backend:
+  port: 9080
+  name: zauni-app-be

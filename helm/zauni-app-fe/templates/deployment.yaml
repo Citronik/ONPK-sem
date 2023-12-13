@@ -19,7 +19,6 @@ spec:
         image: hijackersvk/onpk-appfrontend:{{ .Values.image.tag | default .Chart.AppVersion }}
         imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
         env:
-          - name: REACT_APP_APIHOSTPORT
-            value: {{ .Values.env.REACT_APP_APIHOSTPORT }}
+          {{- include "zauni-app-fe.env" . | nindent 8 }}
         ports:
-        - containerPort: 8080
+        - containerPort: {{ .Values.service.targetPort }}

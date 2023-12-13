@@ -18,7 +18,7 @@ RUN chmod +x /docker-entrypoint.d/env.sh
 RUN rm /etc/nginx/conf.d/default.conf
 COPY conf.d/default.conf /etc/nginx/conf.d
 
-EXPOSE 808
+EXPOSE 8080
 
 ENTRYPOINT ["nginx", "-g", "daemon off;"]
 
