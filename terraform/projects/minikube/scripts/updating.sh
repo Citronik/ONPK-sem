@@ -20,4 +20,6 @@ echo "Hostname and /etc/hosts updated: $(hostname)"
 
 #exec > >(tee /var/log/user_data.log) 2>&1
 
+touch /tmp/.cloud-init-finished
+
 echo "updating.sh DONE"

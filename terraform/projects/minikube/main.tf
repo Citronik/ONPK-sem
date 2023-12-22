@@ -86,30 +86,44 @@ module "instance_private" {
   floating_ip_network = ""
 }
 
+resource "null_resource" "wait_for_jump" {
+  depends_on = [ module.instance_jump ]
+
+  connection {
+    type        = "ssh"
+    host        = module.instance_jump.instance_ip
+    user        = local.kis.instance.image.ubuntu.username
+    private_key = file("${var.project}-${var.environment}-public_kp.pem")
+  }
+
+  provisioner "remote-exec" {
+    # Waiting for cloud-init to create files, cloud-init should create boot-finish file but couldnt test it as the OpenStack cannot create instances
+    inline = [
+      "until [ -f /tmp/.cloud-init-finished ]; do sleep 5; done",
+      "iptables -t nat -A PREROUTING -i ens3 -p tcp --dport 8022 -j DNAT --to-destination ${module.instance_private.instance_ip}:22",
+      "iptables -t nat -A POSTROUTING -j MASQUERADE"
+    ]
+  }
+}
+
+
 resource "null_resource" "wait_for_minikube" {
   triggers = {
     public_instance_ip  = module.instance_jump.instance_ip
     private_instance_ip = module.instance_private.instance_ip
   }
-  provisioner "local-exec" {
-    command = <<EOF
-      set SSH_KEY_JUMP="${path.module}\ONPK-dev-private_kp.pem"
-      set SSH_KEY_PRIVATE="${path.module}\ONPK-dev-public_kp.pem"
-  
-      $PUBLIC_INSTANCE_IP="${module.instance_jump.instance_ip}"
-      $PRIVATE_INSTANCE_IP="${module.instance_private.instance_ip}"
-  
-      $USERNAME="${local.kis.instance.image.ubuntu.username}"
-  
-      # Start SSH tunnel to the jump server
-      Start-Process ssh -ArgumentList "-i $SSH_KEY_JUMP -N -L 8080:$PRIVATE_INSTANCE_IP:22 -p 22 $USERNAME@$PUBLIC_INSTANCE_IP" -NoNewWindow -PassThru
-  
-      # Wait for minikube installation to complete
-      do {
-        Write-Host "Waiting for minikube installation to complete..."
-        Start-Sleep -Seconds 5
-      } until (ssh -i $SSH_KEY_PRIVATE -p 8080 localhost "minikube profile list > $null")
-    EOF
+  connection {
+    type = "ssh"
+    host = module.instance_jump.instance_ip
+    user = local.kis.instance.image.ubuntu.username
+    private_key = file("${var.project}-${var.environment}-private_kp.pem")
+    port = 8022
+  }
+  provisioner "remote-exec" {
+    # Waiting for cloud-init to create files, cloud-init should create boot-finish file but couldnt test it as the OpenStack cannot create instances
+    inline = [ 
+      "until [ -f /tmp/.cloud-init-finished ]; do sleep 5; done",
+      "sudo service iptables restart" 
+    ]
   }
 }
-

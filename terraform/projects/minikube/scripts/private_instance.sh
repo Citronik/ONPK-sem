@@ -104,4 +104,5 @@ su - ubuntu -c "minikube start --kubernetes-version=${K8S_VERSION} --nodes=3"
 su - ubuntu -c "minikube addons enable ingress"
 su - ubuntu -c "minikube status"
 
+touch /tmp/.cloud-init-finished
 echo "minikube.sh DONE"
