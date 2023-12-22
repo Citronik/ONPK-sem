@@ -96,13 +96,12 @@ source ~/.bashrc
 echo "Starting minikube"
 echo "K8S_VERSION: ${K8S_VERSION}"
 
-# minikube start --kubernetes-version=${K8S_VERSION} --nodes=3
-# minikube addons enable ingress
-# minikube status
-
 su - ubuntu -c "minikube start --kubernetes-version=${K8S_VERSION} --nodes=3"
-su - ubuntu -c "minikube addons enable ingress"
+su - ubuntu -c "minikube addons enable ingress metrics-server"
 su - ubuntu -c "minikube status"
+
+#tekton pipelines
+su - ubuntu -c "kubectl apply --filename https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml"
 
 touch /tmp/.cloud-init-finished
 echo "minikube.sh DONE"
