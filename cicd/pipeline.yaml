@@ -15,6 +15,8 @@ spec:
       type: string
     - name: context
       type: string
+    - name: app-part
+      type: string
   workspaces:
     - name: shared-data
     - name: docker-credentials
@@ -27,7 +29,7 @@ spec:
         - name: url
           value: $(params.repo-url)
         - name: revision
-          value: dev
+          value: 1.0.0/main
       workspaces:
         - name: output
           workspace: shared-data
@@ -35,29 +37,34 @@ spec:
           workspace: git-credentials
     - name: extract-tag
       runAfter: ["fetch-source"]
-      outputs:
-        - name: tag
-          description: "The tag extracted from the git repo"
       taskSpec:
         steps:
           - name: extract-tag
             image: alpine:3.18
             command: ["sh"]
             args:
-          - "-c"
-          - |
-            #!/usr/bin/env sh
-            apk add --no-cache jq
-            branch_name=$(jq -r '.ref' $(workspaces.source.path)/.git/ref)
-            tag=$(echo $branch_name | cut -d'/' -f1)
-            echo "Extracted tag: $tag"
+              - "-c"
+              - |
+                #!/usr/bin/env sh
+                apk add --no-cache jq
+                cat $(workspaces.source.path)/$(context)/.git/HEAD
+                tag=$(cat $(workspaces.source.path)/$(context)/.git/HEAD | cut -d'/' -f3)
+                #tag=$(echo $branch_name | cut -d'/' -f1)
+                echo $tag > $(workspaces.source.path)/tag.txt
+                echo "Extracted tag: $tag"
+      params:
+        - name: context
+          value: $(params.context)
+      workspaces:
+        - name: source
+          workspace: shared-data
     - name: build-push
       runAfter: ["extract-tag"]
       taskRef:
         name: buildah
       params:
         - name: IMAGE
-          value: $(params.image-reference):$(tasks.extract-tag.outputs.tag)
+          value: $(params.image-reference):$(cat $(workspaces.source.path)/tag.txt)
         - name: DOCKERFILE
           value: $(params.dockerfile)
         - name: CONTEXT
@@ -80,7 +87,7 @@ spec:
             script: |
               #!/usr/bin/env sh
               apk add --no-cache yq
-              yq -i '.image.tag = "$(params.image-reference):$(tasks.extract-tag.outputs.tag)"' $(workspaces.source.path)/helm/$(app-part)/values.yaml
+              yq -i '.image.tag = "$(IMAGE)"' $(workspaces.source.path)/helm/$(app-part)/values.yaml
           - name: check
             image: alpine:3.18
             command: ["cat"]
@@ -88,9 +95,12 @@ spec:
               - "$(workspaces.source.path)/helm/$(app-part)/values.yaml"
         params:
           - name: IMAGE
+          - name: app-part
       params:
         - name: IMAGE
-          value: $(params.image-reference):$(tasks.extract-tag.outputs.tag)
+          value: $(params.image-reference):$(cat $(workspaces.source.path)/tag.txt)
+        - name: app-part
+          value: $(params.app-part)
       workspaces:
         - name: source
           workspace: shared-data
@@ -102,12 +112,13 @@ spec:
             image: alpine:3.18
             command: ["helm"]
             args:
-              - "upgrade"
-              - "$(app-part)"
-              - "$(workspaces.source.path)/helm/$(app-part)"
-              - "--values=$(workspaces.source.path)/helm/$(app-part)/values.yaml"
-              - "--install"
-              - "--create-namespace"
+              - |
+                upgrade $(app-part) $(workspaces.source.path)/helm/$(app-part)/ --values=$(workspaces.source.path)/helm/$(app-part)/values.yaml --install --create-namespace
+        params:
+          - name: app-part
+      params:
+        - name: app-part
+          value: $(params.app-part)
       workspaces:
         - name: source
           workspace: shared-data
