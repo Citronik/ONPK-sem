@@ -1,0 +1,37 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: clone-build-push-run-
+spec:
+  serviceAccountName: pipeline-sa
+  pipelineRef:
+    name: clone-build-push
+  podTemplate:
+    securityContext:
+      fsGroup: 65532
+  params:
+    - name: repo-url
+      value: git@github.com:Citronik/ONPK-sem.git
+    - name: image-reference
+      value: docker.io/hijackersvk/onpk-frontend
+    - name: dockerfile
+      value: zauni-zadanie-appfrontend/Dockerfile
+    - name: context
+      value: onpk-frontend
+    - name: app-part
+      value: zauni-app-fe
+  workspaces:
+    - name: shared-data
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+    - name: git-credentials
+      secret:
+        secretName: git-credentials
+    - name: docker-credentials
+      secret:
+        secretName: docker-credentials
