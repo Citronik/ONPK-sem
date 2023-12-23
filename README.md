@@ -1,6 +1,6 @@
 # ONPK-sem 🎓
 
-# Project Name :github:
+# Project Name  🌐
 Term Project for the subject Orchestration tools for containers :rocket:
 
 ## Description
