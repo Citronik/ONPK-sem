@@ -105,8 +105,14 @@ su - ubuntu -c "kubectl apply -f https://storage.googleapis.com/tekton-releases/
 su - ubuntu -c "kubectl apply -f https://storage.googleapis.com/tekton-releases/dashboard/latest/release.yaml"
 su - ubuntu -c "kubectl -n tekton-pipelines port-forward svc/tekton-dashboard 9097:9097"
 
+## tekton tasks
 su - ubuntu -c "kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/git-clone/0.6/git-clone.yaml"
 su - ubuntu -c "kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/buildah/0.6/buildah.yaml"
+
+
+## tekton triggers
+su - ubuntu -c "kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml"
+su - ubuntu -c "kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/latest/interceptors.yaml"
 
 touch /tmp/.cloud-init-finished
 echo "minikube.sh DONE"
