@@ -37,72 +37,93 @@ resource "openstack_compute_keypair_v2" "public_kp" {
 # --------------------- network ----------------------
 
 module "network" {
-  source            = "../../modules/network"
-  name              = "${var.project}-${var.environment}"
-  private_cidr      = var.private_cidr
+  source              = "../../modules/network"
+  name                = "${var.project}-${var.environment}"
+  private_cidr        = var.private_cidr
   public_network_name = var.public_network_name
 }
 
 # ------------------ security_group --------------------
 
 module "security_group_public" {
-  source            = "../../modules/sec_group"
+  source              = "../../modules/sec_group"
   security_group_name = "${var.project}-${var.environment}-public"
-  rules = var.public_rules.type
+  rules               = var.public_rules
 }
 
 module "security_group_private" {
-  source            = "../../modules/sec_group"
+  source              = "../../modules/sec_group"
   security_group_name = "${var.project}-${var.environment}-private"
-  rules = var.private_rules.type
+  rules               = var.private_rules
 }
 
 # --------------------- instances ----------------------
 module "instance_jump" {
-  depends_on = [ data.cloudinit_config.user_data_jump, module.security_group_public ]
+  depends_on    = [data.cloudinit_config.user_data_jump, module.security_group_public, module.network]
   source        = "../../modules/compute"
   instance_name = "${var.project}-${var.environment}-jump"
   instance-kp   = openstack_compute_keypair_v2.public_kp.name
   user_data     = data.cloudinit_config.user_data_jump.rendered
   image         = local.kis.instance.image.ubuntu.name
-  flavor        = local.kis.instance.flavor_name
-  network_name  = var.public_network_name
+  #  image           = local.kis.instance.image.debian.name
+  flavor          = local.kis.instance.flavor_name
+  network_name    = module.network.network_name
   security_groups = [module.security_group_public.security_group_name]
+  floating_ip_network = var.public_network_name
 }
 
 module "instance_private" {
-  depends_on = [ data.cloudinit_config.user_data_private, module.security_group_private ]
+  depends_on    = [data.cloudinit_config.user_data_private, module.security_group_private, module.network]
   source        = "../../modules/compute"
   instance_name = "${var.project}-${var.environment}-private"
   instance-kp   = openstack_compute_keypair_v2.private_kp.name
   user_data     = data.cloudinit_config.user_data_private.rendered
   image         = local.kis.instance.image.ubuntu.name
-  flavor        = local.kis.instance.flavor_name
-  network_name  = module.network.network_name
+  #  image           = local.kis.instance.image.debian.name
+  flavor          = local.kis.instance.flavor_name
+  network_name    = module.network.network_name
   security_groups = [module.security_group_private.security_group_name]
+  floating_ip_network = ""
 }
+
+resource "null_resource" "wait_for_jump" {
+  depends_on = [ module.instance_jump ]
+
+  connection {
+    type        = "ssh"
+    host        = module.instance_jump.instance_ip
+    user        = local.kis.instance.image.ubuntu.username
+    private_key = file("${var.project}-${var.environment}-public_kp.pem")
+  }
+
+  provisioner "remote-exec" {
+    # Waiting for cloud-init to create files, cloud-init should create boot-finish file but couldnt test it as the OpenStack cannot create instances
+    inline = [
+      "until [ -f /tmp/.cloud-init-finished ]; do sleep 5; done",
+      "iptables -t nat -A PREROUTING -i ens3 -p tcp --dport 8022 -j DNAT --to-destination ${module.instance_private.instance_ip}:22",
+      "iptables -t nat -A POSTROUTING -j MASQUERADE"
+    ]
+  }
+}
+
 
 resource "null_resource" "wait_for_minikube" {
   triggers = {
-    instance_id = module.instance.private_instance_id
+    public_instance_ip  = module.instance_jump.instance_ip
+    private_instance_ip = module.instance_private.instance_ip
   }
-
-  provisioner "local-exec" {
-    command = <<EOF
-      set SSH_KEY_JUMP="${path.module}/${openstack_compute_keypair_v2.public_kp.name}.pem"
-      set SSH_KEY_PRIVATE="${path.module}/${openstack_compute_keypair_v2.private_kp.name}.pem"
-
-      set PUBLIC_INSTANCE_IP="${module.instance.public_instance_ip}"
-      set PRIVATE_INSTANCE_IP="${module.instance.private_instance_ip}"
-
-      set USERNAME="${local.kis.instance.image.ubuntu.username}"
-
-      ssh -i "%SSH_KEY_JUMP%" -N -L 8080:%PRIVATE_INSTANCE_IP%:22 -p 22 %USERNAME%@%PUBLIC_INSTANCE_IP%
-
-      until ssh -i "%SSH_KEY_PRIVATE%" -p 8080 localhost "minikube profile list > /dev/null"; do
-        echo "Waiting for minikube installation to complete..."
-        sleep 5
-      done
-    EOF
+  connection {
+    type = "ssh"
+    host = module.instance_jump.instance_ip
+    user = local.kis.instance.image.ubuntu.username
+    private_key = file("${var.project}-${var.environment}-private_kp.pem")
+    port = 8022
+  }
+  provisioner "remote-exec" {
+    # Waiting for cloud-init to create files, cloud-init should create boot-finish file but couldnt test it as the OpenStack cannot create instances
+    inline = [ 
+      "until [ -f /tmp/.cloud-init-finished ]; do sleep 5; done",
+      "sudo service iptables restart" 
+    ]
   }
 }

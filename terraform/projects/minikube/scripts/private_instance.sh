@@ -4,6 +4,7 @@ echo "Starting updating.sh"
 
 if ! grep -q "$(hostname)" /etc/hosts; then
     echo "127.0.0.1 $(hostname)" >> /etc/hosts
+    echo "Hostname and /etc/hosts updated: $(hostname)"
 fi
 
 if ! grep -q "158.193.152.4" /etc/resolv.conf; then
@@ -12,12 +13,16 @@ if ! grep -q "158.193.152.4" /etc/resolv.conf; then
     echo adding DNS
 fi
 
-sudo apt-get update
-sudo apt-get upgrade -y
+export LANGUAGE=en_US.UTF-8
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+locale-gen en_US.UTF-8
+dpkg-reconfigure locales
 
-sudo apt-get install -y git curl wget
+apt-get update
+apt-get upgrade -y
 
-echo "Hostname and /etc/hosts updated: $(hostname)"
+apt-get install -y git curl wget
 
 #exec > >(tee /var/log/user_data.log) 2>&1
 
@@ -31,35 +36,35 @@ if docker --version >> /dev/null; then
     echo "docker already installed "
 else
 
-    for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
+    for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do apt-get remove $pkg; done
 
     # Add Docker's official GPG key:
-    sudo apt-get update -y
-    sudo apt-get install ca-certificates curl gnupg -y
-    sudo install -m 0755 -d /etc/apt/keyrings
+    apt-get update -y
+    apt-get install ca-certificates curl gnupg -y
+    install -m 0755 -d /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-    sudo chmod a+r /etc/apt/keyrings/docker.gpg
+    chmod a+r /etc/apt/keyrings/docker.gpg
 
     # Add the repository to Apt sources:
     echo \
       "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
       "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-    sudo apt-get update -y
+      tee /etc/apt/sources.list.d/docker.list > /dev/null
+    apt-get update -y
 
-    sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
+    apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
     # postinstall
-    sudo groupadd docker
-    sudo usermod -aG docker $USER
-    sudo usermod -aG docker ubuntu
+    echo "docker postinstall"
+    groupadd docker
+    #usermod -aG docker $USER
+    usermod -aG docker ubuntu
 fi
 
 docker run hello-world
 
-#------------------------------------------------------------
-
 echo "docker.sh DONE"
 
+#------------------------------------------------------------
 
 K8S_VERSION="{{ k8s_version }}"
 
@@ -67,19 +72,19 @@ K8S_VERSION="{{ k8s_version }}"
 echo "Starting minikube.sh"
 
 curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-sudo install minikube-linux-amd64 /usr/local/bin/minikube
+install minikube-linux-amd64 /usr/local/bin/minikube
 
 # apt-transport-https may be a dummy package; if so, you can skip that package
-sudo apt-get install -y apt-transport-https ca-certificates curl
+apt-get install -y apt-transport-https ca-certificates curl
 
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
 echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
-sudo apt-get update
-sudo apt-get install -y kubectl
+apt-get update
+apt-get install -y kubectl
 
-sudo apt-get install bash-completion
+apt-get install bash-completion
 
 source /usr/share/bash-completion/bash_completion
 
@@ -88,12 +93,26 @@ echo 'alias k=kubectl' >>~/.bashrc
 echo 'complete -o default -F __start_kubectl k' >>~/.bashrc
 source ~/.bashrc
 
-# su - ubuntu -c "minikube start --kubernetes-version=${K8S_VERSION} --nodes=3"
-# su - ubuntu -c "minikube addons enable ingress"
-# su - ubuntu -c "minikube status"
+echo "Starting minikube"
+echo "K8S_VERSION: ${K8S_VERSION}"
 
-minikube start --kubernetes-version=${K8S_VERSION} --nodes=3
-minikube addons enable ingress
-minikube status
+su - ubuntu -c "minikube start --kubernetes-version=${K8S_VERSION} --nodes=3"
+su - ubuntu -c "minikube addons enable ingress metrics-server"
+su - ubuntu -c "minikube status"
 
+#tekton pipelines
+su - ubuntu -c "kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml"
+su - ubuntu -c "kubectl apply -f https://storage.googleapis.com/tekton-releases/dashboard/latest/release.yaml"
+su - ubuntu -c "kubectl -n tekton-pipelines port-forward svc/tekton-dashboard 9097:9097"
+
+## tekton tasks
+su - ubuntu -c "kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/git-clone/0.6/git-clone.yaml"
+su - ubuntu -c "kubectl apply -f https://raw.githubusercontent.com/tektoncd/catalog/main/task/buildah/0.6/buildah.yaml"
+
+
+## tekton triggers
+su - ubuntu -c "kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml"
+su - ubuntu -c "kubectl apply --filename https://storage.googleapis.com/tekton-releases/triggers/latest/interceptors.yaml"
+
+touch /tmp/.cloud-init-finished
 echo "minikube.sh DONE"

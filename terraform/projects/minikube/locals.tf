@@ -17,6 +17,7 @@ locals {
     instance = {
       flavor_name      = "2c2r20d",
       flavor_mini_name = "1c05r8d",
+      flavor_bigger    = "4c4r40d",
       image = {
         ubuntu = {
           name     = "ubuntu-22.04-KIS",

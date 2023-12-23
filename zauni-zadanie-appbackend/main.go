@@ -57,7 +57,7 @@ func createPlatform(w http.ResponseWriter, req *http.Request) {
 	name := strings.ToLower(params["name"])
 
 	fmt.Println(fmt.Sprintf("POST api call made to /platforms/%s", name))
-
+	log.Println(fmt.Sprintf("POST api call made to /platforms/%s", name))
 	pltf := platform{name, detail}
 
 	id := insertNewPlatform(c, pltf)
@@ -76,7 +76,7 @@ func createPlatform(w http.ResponseWriter, req *http.Request) {
 
 func getPlatforms(w http.ResponseWriter, _ *http.Request) {
 	fmt.Println("GET api call made to /platforms")
-
+	log.Println("GET api call made to /platforms")
 	var pltfmap = make(map[string]*codedetail)
 	pltfs, err := returnAllPlatforms(c, bson.M{})
 	if err != nil {
@@ -158,7 +158,7 @@ func returnAllPlatforms(client *mongo.Client, filter bson.M) ([]*platform, error
 	collection := client.Database(MONGO_DB).Collection(MONGO_COLLECTION)
 	cur, err := collection.Find(context.TODO(), filter)
 	if err != nil {
-		log.Println("Err: ",err);
+		log.Println("Err: ", err)
 		return nil, errors.New("error querying documents from database")
 	}
 	for cur.Next(context.TODO()) {
@@ -216,7 +216,7 @@ func updateVote(client *mongo.Client, filter bson.M) int64 {
 	return updatedResult.ModifiedCount
 }
 
-//getClient returns a MongoDB Client
+// getClient returns a MongoDB Client
 func getClient() *mongo.Client {
 	mongoconnstr := getEnv("MONGO_CONN_STR", MONGO_DEFAULT_CONN_STR)
 	mongousername := getEnv("MONGO_USERNAME", MONGO_DEFAULT_USERNAME)

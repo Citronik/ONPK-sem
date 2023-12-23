@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: zauni-app-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /api(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service: 
+            name: {{ .Values.backend.name }}
+            port:
+              number: {{ .Values.backend.port }}
+  - http:
+      paths:
+      - path: /()(.*)
+        pathType: Prefix
+        backend:
+          service: 
+            name: {{ include "zauni-app-fe.fullname" . }}
+            port:
+              number: {{ .Values.service.port }}

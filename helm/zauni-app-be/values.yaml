@@ -1,0 +1,78 @@
+# Default values for zauni-app-be.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  pullPolicy: Always
+  tag: "stage"
+
+imagePullSecrets: []
+nameOverride: "zauni-app-be"
+fullnameOverride: "zauni-app-be"
+
+service:
+  port: 9080
+  type: ClusterIP
+  targetPort: 9080
+
+mongodb:
+  name: zauni-app-mongodb
+  fullnameOverride: zauni-app-mongodb
+  databaseName: zauni_app
+  replicaCount: 1
+  version: 13.6.2
+  port: 27017
+  username: admin
+  password: password
+  service:
+    type: ClusterIP
+  persistence:
+    enabled: false
+  #auth:
+    #rootUser: mongoroot
+    #rootPassword: mongotest
+  initdbScripts:
+    init_script.js: |
+      db = db.getSiblingDB("platformsdb");
+      db.createUser({
+        user: "admin",
+        pwd: "password",
+        roles:[{role: "readWrite" , db:"platformsdb"}]
+      });
+      db.createCollection("platforms");
+      db.platforms.insertMany(
+       [
+         {
+              "name": "openshift",
+              "codedetail": {
+                  "usecase": "Container platform",
+                  "rank": 12,
+                  "homepage": "https://openshift.com",
+                  "download": "https://developers.redhat.com/products/codeready-containers/overview",
+                  "votes": 0
+              }
+          },
+          {
+              "name": "kubernetes",
+              "codedetail": {
+                  "usecase": "Container orchestration platform ",
+                  "rank": 38,
+                 "homepage": "https://kubernetes.com",
+                  "download": "https://kubernetes.io/docs/tasks/tools/install-minikube/",
+                  "votes": 0
+              }
+          },
+          {
+              "name": "rancher",
+              "codedetail": {
+                  "usecase": "Container platform management ",
+                  "rank": 50,
+                  "homepage": "https://rancher.com/",
+                  "download": "https://github.com/rancher/rancher",
+                  "votes": 0
+              }
+          }
+        ]    
+      );
