@@ -1,0 +1,113 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: clone-build-push
+spec:
+  description: |
+    This pipeline clones a git repo, builds a Docker image with buildah and
+    pushes it to a registry
+  params:
+    - name: repo-url
+      type: string
+    - name: image-reference
+      type: string
+    - name: dockerfile
+      type: string
+    - name: context
+      type: string
+  workspaces:
+    - name: shared-data
+    - name: docker-credentials
+    - name: git-credentials
+  tasks:
+    - name: fetch-source
+      taskRef:
+        name: git-clone
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: dev
+      workspaces:
+        - name: output
+          workspace: shared-data
+        - name: ssh-directory
+          workspace: git-credentials
+    - name: extract-tag
+      runAfter: ["fetch-source"]
+      outputs:
+        - name: tag
+          description: "The tag extracted from the git repo"
+      taskSpec:
+        steps:
+          - name: extract-tag
+            image: alpine:3.18
+            command: ["sh"]
+            args:
+          - "-c"
+          - |
+            #!/usr/bin/env sh
+            apk add --no-cache jq
+            branch_name=$(jq -r '.ref' $(workspaces.source.path)/.git/ref)
+            tag=$(echo $branch_name | cut -d'/' -f1)
+            echo "Extracted tag: $tag"
+    - name: build-push
+      runAfter: ["extract-tag"]
+      taskRef:
+        name: buildah
+      params:
+        - name: IMAGE
+          value: $(params.image-reference):$(tasks.extract-tag.outputs.tag)
+        - name: DOCKERFILE
+          value: $(params.dockerfile)
+        - name: CONTEXT
+          value: $(params.context)
+        - name: SKIP_PUSH
+          value: false
+        - name: FORMAT
+          value: docker
+      workspaces:
+        - name: source
+          workspace: shared-data
+        - name: dockerconfig
+          workspace: docker-credentials
+    - name: update-image-version
+      runAfter: ["build-push"]
+      taskSpec:
+        steps:
+          - name: update-version
+            image: alpine:3.18
+            script: |
+              #!/usr/bin/env sh
+              apk add --no-cache yq
+              yq -i '.image.tag = "$(params.image-reference):$(tasks.extract-tag.outputs.tag)"' $(workspaces.source.path)/helm/$(app-part)/values.yaml
+          - name: check
+            image: alpine:3.18
+            command: ["cat"]
+            args:
+              - "$(workspaces.source.path)/helm/$(app-part)/values.yaml"
+        params:
+          - name: IMAGE
+      params:
+        - name: IMAGE
+          value: $(params.image-reference):$(tasks.extract-tag.outputs.tag)
+      workspaces:
+        - name: source
+          workspace: shared-data
+    - name: deploy-app-fe
+      runAfter: ["update-image-version"]
+      taskSpec:
+        steps:
+          - name: deploy-fe-helm-chart
+            image: alpine:3.18
+            command: ["helm"]
+            args:
+              - "upgrade"
+              - "$(app-part)"
+              - "$(workspaces.source.path)/helm/$(app-part)"
+              - "--values=$(workspaces.source.path)/helm/$(app-part)/values.yaml"
+              - "--install"
+              - "--create-namespace"
+      workspaces:
+        - name: source
+          workspace: shared-data

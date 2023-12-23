@@ -80,12 +80,12 @@ spec:
             script: |
               #!/usr/bin/env sh
               apk add --no-cache yq
-              yq -i '.image.tag = "$(params.image-reference):$(tasks.extract-tag.outputs.tag)"' $(workspaces.source.path)/helm/zauni-app-fe/values.yaml
+              yq -i '.image.tag = "$(params.image-reference):$(tasks.extract-tag.outputs.tag)"' $(workspaces.source.path)/helm/$(app-part)/values.yaml
           - name: check
             image: alpine:3.18
             command: ["cat"]
             args:
-              - "$(workspaces.source.path)/helm/zauni-app-fe/values.yaml"
+              - "$(workspaces.source.path)/helm/$(app-part)/values.yaml"
         params:
           - name: IMAGE
       params:
@@ -94,18 +94,18 @@ spec:
       workspaces:
         - name: source
           workspace: shared-data
-    - name: deploy-app-fe
+    - name: deploy-app-partly
       runAfter: ["update-image-version"]
       taskSpec:
         steps:
-          - name: deploy-fe-helm-chart
+          - name: deploy-helm-chart
             image: alpine:3.18
             command: ["helm"]
             args:
               - "upgrade"
-              - "zauni-app-fe"
-              - "$(workspaces.source.path)/helm/zauni-app-fe"
-              - "--values=$(workspaces.source.path)/helm/zauni-app-fe/values.yaml"
+              - "$(app-part)"
+              - "$(workspaces.source.path)/helm/$(app-part)"
+              - "--values=$(workspaces.source.path)/helm/$(app-part)/values.yaml"
               - "--install"
               - "--create-namespace"
       workspaces:
