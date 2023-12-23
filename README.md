@@ -1,6 +1,7 @@
 # ONPK-sem
 
 # Project Name
+Term Project for the subject Orchestration tools for containers 
 
 ## Description
 
