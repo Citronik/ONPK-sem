@@ -1,36 +1,38 @@
-# ONPK-sem
+# ONPK-sem 🎓
 
-# Project Name
+# Project Name :github:
+Term Project for the subject Orchestration tools for containers :rocket:
 
 ## Description
 
-Provide a brief description of your project here.
+This project aims to showcase the use of orchestration tools for containers, focusing on building a simple application using React, Golang, MongoDB, Terraform, Helm charts, and Tekton pipelines :cloud: :rocket: :gear: :construction:
 
 ## Technologies Used
 
-- Frontend: React
-- Backend: Go lang
-- Database: MongoDB
-- Infrastructure: :cloud: Terraform
-- Deployment: :rocket: Helm charts
-- CI/CD: :gear: Tekton pipelines
+- Frontend: React :sparkles:
+- Backend: Go lang :computer:
+- Database: MongoDB :cloud:
+- Infrastructure: Terraform :cloud:
+- Deployment: Helm charts :rocket:
+- CI/CD: Tekton pipelines :gear:
 
-## Installation
+## Installation :hammer: :wrench:
 
-1. Clone the repository.
-2. Install the required dependencies for both frontend and backend.
+1. Clone the repository :sparkles:
+2. Install the required dependencies for both frontend and backend using your preferred package manager (npm/yarn :package:).
 3. Set up the MongoDB database.
-4. Use Terraform to provision the required infrastructure.
+4. Use Terraform to provision the required infrastructure using the provided configuration files.
 
 ## Usage
 
-Explain how to use your project here. Include any relevant instructions or examples.
+1. Deploy the application using Helm charts.
+2. Access the application using the provided URL. 
 
 ## Contributing
 
 If you would like to contribute to this project, please follow these steps:
 
-1. Fork the repository.
+1. Fork the repository :sparkles:
 2. Create a new branch.
 3. Make your changes and commit them.
 4. Push your changes to your forked repository.
@@ -38,8 +40,8 @@ If you would like to contribute to this project, please follow these steps:
 
 ## License
 
-Specify the license under which your project is distributed.
+This project is distributed under the MIT License.
 
 ## Contact
 
-Provide your contact information here, such as your email address or social media handles.
+For any questions or inquiries, please contact me at your preferred communication channel (email, social media).
