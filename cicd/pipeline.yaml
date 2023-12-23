@@ -35,9 +35,6 @@ spec:
           workspace: git-credentials
     - name: extract-tag
       runAfter: ["fetch-source"]
-      outputs:
-        - name: tag
-          description: "The tag extracted from the git repo"
       taskSpec:
         steps:
           - name: extract-tag
@@ -51,6 +48,9 @@ spec:
             branch_name=$(jq -r '.ref' $(workspaces.source.path)/.git/ref)
             tag=$(echo $branch_name | cut -d'/' -f1)
             echo "Extracted tag: $tag"
+      outputs:
+        - name: tag
+          description: "The tag extracted from the git repo"
     - name: build-push
       runAfter: ["extract-tag"]
       taskRef:
