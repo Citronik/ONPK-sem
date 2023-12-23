@@ -37,6 +37,9 @@ spec:
           workspace: git-credentials
     - name: extract-tag
       runAfter: ["fetch-source"]
+      params:
+        - name: CONTEXT
+          value: $(params.context)
       taskSpec:
         steps:
           - name: extract-tag
@@ -46,15 +49,11 @@ spec:
               - "-c"
               - |
                 #!/usr/bin/env sh
-                apk add --no-cache jq
-                cat $(workspaces.source.path)/$(context)/.git/HEAD
-                tag=$(cat $(workspaces.source.path)/$(context)/.git/HEAD | cut -d'/' -f3)
-                #tag=$(echo $branch_name | cut -d'/' -f1)
+                ls -lha $(workspaces.source.path)/$(CONTEXT)/.git/
+                cat $(workspaces.source.path)/$(CONTEXT)/.git/HEAD
+                tag=$(cat $(workspaces.source.path)/$(CONTEXT)/.git/HEAD | cut -d'/' -f3)                
                 echo $tag > $(workspaces.source.path)/tag.txt
                 echo "Extracted tag: $tag"
-      params:
-        - name: context
-          value: $(params.context)
       workspaces:
         - name: source
           workspace: shared-data
@@ -80,6 +79,11 @@ spec:
           workspace: docker-credentials
     - name: update-image-version
       runAfter: ["build-push"]
+      params:
+        - name: IMAGE
+          value: $(params.image-reference):$(cat $(workspaces.source.path)/tag.txt)
+        - name: APP-PART
+          value: $(params.app-part)
       taskSpec:
         steps:
           - name: update-version
@@ -87,25 +91,20 @@ spec:
             script: |
               #!/usr/bin/env sh
               apk add --no-cache yq
-              yq -i '.image.tag = "$(IMAGE)"' $(workspaces.source.path)/helm/$(app-part)/values.yaml
+              yq -i '.image.tag = "$(IMAGE)"' $(workspaces.source.path)/helm/$(APP-PART)/values.yaml
           - name: check
             image: alpine:3.18
             command: ["cat"]
             args:
-              - "$(workspaces.source.path)/helm/$(app-part)/values.yaml"
-        params:
-          - name: IMAGE
-          - name: app-part
-      params:
-        - name: IMAGE
-          value: $(params.image-reference):$(cat $(workspaces.source.path)/tag.txt)
-        - name: app-part
-          value: $(params.app-part)
+              - "$(workspaces.source.path)/helm/$(APP-PART)/values.yaml"
       workspaces:
         - name: source
           workspace: shared-data
     - name: deploy-app-partly
       runAfter: ["update-image-version"]
+      params:
+        - name: APP-PART
+          value: $(params.app-part)
       taskSpec:
         steps:
           - name: deploy-helm-chart
@@ -113,12 +112,7 @@ spec:
             command: ["helm"]
             args:
               - |
-                upgrade $(app-part) $(workspaces.source.path)/helm/$(app-part)/ --values=$(workspaces.source.path)/helm/$(app-part)/values.yaml --install --create-namespace
-        params:
-          - name: app-part
-      params:
-        - name: app-part
-          value: $(params.app-part)
+                upgrade $(APP-PART) $(workspaces.source.path)/helm/$(APP-PART)/ --values=$(workspaces.source.path)/helm/$(APP-PART)/values.yaml --install --create-namespace
       workspaces:
         - name: source
           workspace: shared-data

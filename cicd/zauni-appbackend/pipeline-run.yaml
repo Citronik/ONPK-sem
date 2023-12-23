@@ -17,7 +17,7 @@ spec:
     - name: dockerfile
       value: zauni-zadanie-appbackend/Dockerfile
     - name: context
-      value: onpk-backend
+      value: zauni-zadanie-appbackend
     - name: app-part
       value: zauni-app-be
   workspaces:
